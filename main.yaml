@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment #название инструмента для запуска локально
+metadata:
+  name: web-apps-autoscaling #имя нашего Deployment
+  labels:
+    app: web-apps #поды прикрепляем к этому label
+    env: prod #отметка окружения
+    owner: hh
+spec: # спецификация для деплоймента
+  replicas: 4 #количество подов
+  selector: #с какими подами будет рабоать наш деплоймент
+    matchLabels:
+      project: kubernetes_cluster_pods
+  template: #шаблоны для создания подов
+    metadata:
+      labels: #отметки для подов
+        project: kubernetes_cluster_pods #должен соответствовать на отметку для деплоя
+    spec:
+      containers:
+        - name: web_server
+          image: nginx:latest
+          ports: #конфигурация портов
+            - containerPort: 80
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler #название инструмента для запуска локально
+metadata:
+  name: my_autoscaling
+  spec: # спецификация для autoscaling
+    scaleTargetRef: #цель масштабирования
+      apiVersion: apps/v2
+      kind: Deployment
+      name: web-apps-autoscaling
+    minReplicas: 4 #минимальное кол-во подов
+    maxReplicas: 5 #максимальное кол-во подов
+    metrics: #по каким метрикам будет масштабировать
+    - type: Resource
+      resource:
+        name: cpu #процессор
+        targetAverageUtilization: 80 #использование всех подов
+    - type Resource
+      resource:
+        name: memory #память
+        targetAverageUtilization: 80 #использование всех подов
